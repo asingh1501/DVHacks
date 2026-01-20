@@ -1,0 +1,93 @@
+// DocOps Copilot - Prisma Schema
+// AI-Powered Document Intelligence Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Case {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Document metadata
+  fileName     String?
+  fileType     String? // pdf|docx|txt|paste
+  originalText String // Full document content
+  documentHash String // SHA-256 for deduplication
+
+  // AI Analysis Results
+  docType     String // invoice|contract|resume|incident_report|meeting_notes|policy|email|purchase_order|proposal|other
+  summary     String
+  entities    String // JSON: {people, orgs, dates, amounts, ids, locations, emails, phones}
+  ownerTeam   String // AP|Legal|HR|Ops|Support|Sales|IT|Finance|Procurement|Unknown
+  priority    String // low|medium|high|urgent
+  confidence  Float // 0-1 score from AI
+  aiRationale String // Why AI made these decisions
+
+  // Risk & Compliance
+  missingFields    String // JSON: string[] of required fields not found
+  riskFlags        String // JSON: {flag, severity, description}[]
+  complianceIssues String? // JSON: Optional compliance warnings
+
+  // Generated Actions
+  checklist        String // JSON: {id, task, completed, dueDate, assignee}[]
+  draftEmail       String // JSON: {to, cc, subject, body, tone}
+  suggestedActions String // JSON: {type, title, description, priority}[]
+
+  // User Edits & Overrides
+  userEdits    String? // JSON: Tracks what user changed from AI suggestions
+  editedFields String? // JSON: Field-level edit history
+
+  // Case Management
+  status     String  @default("new") // new|in_progress|pending_review|resolved|archived
+  assignedTo String?
+  tags       String // JSON: string[] for custom categorization
+
+  // Relationships
+  auditEvents AuditEvent[]
+  notes       CaseNote[]
+  attachments Attachment[]
+}
+
+model AuditEvent {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  eventType   String // analyzed|created|edited|status_changed|assigned|note_added|email_sent
+  actor       String @default("system") // system|user|ai
+  description String
+  metadata    String? // JSON: Event-specific data
+  changes     String? // JSON: Before/after for edits
+}
+
+model CaseNote {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  content  String
+  author   String @default("User")
+  noteType String @default("general") // general|decision|followup|escalation
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  fileName   String
+  fileType   String
+  fileSize   Int
+  filePath   String // Relative path in uploads directory
+  uploadedBy String @default("User")
+}
