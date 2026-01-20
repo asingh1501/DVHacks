@@ -1,23 +1,14 @@
 import mammoth from "mammoth";
 import { createRequire } from "module";
 
-// pdf-parse has ESM compatibility issues, use dynamic import
+// pdf-parse v1 exports a function (CommonJS). Use require to avoid debug mode.
 async function getPdfParser() {
   const require = createRequire(import.meta.url);
-  try {
-    const pdfParse = require("pdf-parse");
-    if (typeof pdfParse === "function") return pdfParse;
-    if (typeof pdfParse?.default === "function") return pdfParse.default;
-  } catch {
-    // Fall through to dynamic import when require isn't available.
+  const pdfParse = require("pdf-parse/lib/pdf-parse.js");
+  if (typeof pdfParse !== "function") {
+    throw new Error("Unsupported pdf-parse module format");
   }
-
-  const pdfParse = await import("pdf-parse");
-  const parser = (pdfParse as unknown as { default?: unknown }).default ?? pdfParse;
-  if (typeof parser === "function") return parser;
-  const nested = (parser as { default?: unknown })?.default;
-  if (typeof nested === "function") return nested;
-  throw new Error("Unsupported pdf-parse module format");
+  return pdfParse;
 }
 
 export type SupportedFileType = "pdf" | "docx" | "txt" | "paste";
