@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased bg-gray-50 min-h-screen`}>
         <Providers>
           <Header />
-          <main className="container py-8">
+          <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {children}
           </main>
         </Providers>
