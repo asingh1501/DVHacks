@@ -143,10 +143,10 @@ export default function HomePage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto">
       {/* Hero Section */}
       {!analysis && (
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 px-4">
           <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm mb-4">
             <Sparkles className="w-4 h-4" />
             AI-Powered Document Intelligence
