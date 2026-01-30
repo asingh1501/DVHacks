@@ -1,9 +1,9 @@
-import OpenAI from "openai";
+import Groq from "groq-sdk";
 import { AIAnalysisResult, DocType, OwnerTeam, Priority } from "@/lib/types";
 import { getMockAnalysis } from "./mockAI";
 
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+const groq = process.env.GROQ_API_KEY
+  ? new Groq({ apiKey: process.env.GROQ_API_KEY })
   : null;
 
 const AI_SYSTEM_PROMPT = `You are an expert document analyst for DocOps Copilot, an AI-powered document intelligence platform.
@@ -64,16 +64,18 @@ export async function analyzeDocument(
   const useMockMode =
     options.mockMode ||
     process.env.MOCK_AI === "true" ||
-    !process.env.OPENAI_API_KEY ||
-    !openai;
+    !process.env.GROQ_API_KEY ||
+    !groq;
 
   if (useMockMode) {
+    console.log("Using mock analysis mode");
     return getMockAnalysis(text, options.docTypeHint);
   }
 
   try {
-    const response = await openai!.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    console.log("Calling Groq API for document analysis...");
+    const response = await groq!.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: AI_SYSTEM_PROMPT },
         { role: "user", content: AI_USER_PROMPT(text) },
@@ -85,14 +87,22 @@ export async function analyzeDocument(
 
     const content = response.choices[0]?.message?.content;
     if (!content) {
-      throw new Error("No response from AI");
+      console.error("DEBUG: No response content from Groq API");
+      throw new Error("No response from Groq API");
     }
 
+    console.log("Groq API response received successfully");
     const parsed = JSON.parse(content) as AIAnalysisResult;
     return validateAndNormalizeResult(parsed);
   } catch (error) {
-    console.error("OpenAI API error, falling back to mock:", error);
-    return getMockAnalysis(text, options.docTypeHint);
+    console.error("DEBUG: Groq API error occurred:", error);
+    console.error("DEBUG: Error details:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      groqConfigured: !!groq,
+      hasApiKey: !!process.env.GROQ_API_KEY
+    });
+    throw error;
   }
 }
 

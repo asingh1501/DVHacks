@@ -44,21 +44,37 @@ export async function parseDocument(
 async function parsePdf(file: File | Buffer): Promise<ParsedDocument> {
   try {
     const buffer = file instanceof File ? Buffer.from(await file.arrayBuffer()) : file;
-    const pdf = await getPdfParser();
-    const data = await pdf(buffer);
-
-    return {
-      text: data.text.trim(),
-      fileType: "pdf",
-      metadata: {
-        pageCount: data.numpages,
-        title: data.info?.Title,
-        author: data.info?.Author,
-      },
-    };
+    
+    // Try standard PDF parsing
+    try {
+      const pdf = await getPdfParser();
+      const data = await pdf(buffer);
+      
+      const extractedText = data.text ? data.text.trim() : "";
+      
+      return {
+        text: extractedText || "PDF uploaded but no text extracted. May require OCR.",
+        fileType: "pdf",
+        metadata: {
+          pageCount: data.numpages || 0,
+          title: data.info?.Title,
+          author: data.info?.Author,
+        },
+      };
+    } catch (pdfError) {
+      console.error("PDF parsing error:", pdfError);
+      // Return minimal response instead of failing
+      return {
+        text: "PDF uploaded but could not be parsed. May be corrupted or require OCR.",
+        fileType: "pdf",
+        metadata: {
+          pageCount: 0,
+        },
+      };
+    }
   } catch (error) {
     console.error("PDF parsing error:", error);
-    throw new Error("Failed to parse PDF document");
+    throw new Error("Failed to process PDF file");
   }
 }
 

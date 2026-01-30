@@ -16,8 +16,9 @@ Transform unstructured documents into actionable intelligence with AI-powered an
 
 - **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui
 - **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: SQLite (zero-config, file-based)
-- **AI**: OpenAI GPT-4 with fallback mock mode
+- **Database**: PostgreSQL (Supabase)
+- **AI**: Groq API (llama-3.3-70b-versatile) with fallback mock mode
+- **OCR**: PyTesseract for PDF text extraction
 
 ## Quick Start
 
@@ -25,6 +26,10 @@ Transform unstructured documents into actionable intelligence with AI-powered an
 
 - Node.js 18+
 - npm or yarn
+- Python 3.8+
+- Tesseract OCR (for PDF text extraction)
+- Poppler (for PDF to image conversion)
+- Supabase account (free tier works fine)
 
 ### Installation
 
@@ -34,52 +39,216 @@ git clone <repository-url>
 cd docops-copilot
 ```
 
-2. Install dependencies:
+2. Install Node.js dependencies:
 ```bash
 npm install
 ```
 
-3. Set up environment variables:
+3. Install system dependencies for OCR:
+
+**macOS:**
+```bash
+brew install tesseract poppler
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install tesseract-ocr poppler-utils
+```
+
+**Windows:**
+- Tesseract: https://github.com/UB-Mannheim/tesseract/wiki
+- Poppler: https://github.com/oschwartz10612/poppler-windows/releases
+
+4. Install Python dependencies for OCR:
+```bash
+cd python-services
+pip3 install -r requirements.txt
+cd ..
+```
+
+5. Set up environment variables:
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and optionally add your OpenAI API key:
+Edit `.env` and add your credentials:
 ```env
-# Database
-DATABASE_URL="file:./dev.db"
+# Groq API Key (get from https://console.groq.com)
+GROQ_API_KEY="your_groq_api_key_here"
 
-# OpenAI API Key (optional - uses mock AI if not provided)
-OPENAI_API_KEY=""
+# Supabase Database URLs (see SUPABASE_SETUP.md for details)
+DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres"
 
-# Force mock AI mode even if API key is provided
-MOCK_AI="true"
+# Optional Settings
+MOCK_AI="false"
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 ```
 
-4. Initialize the database:
+**📚 See "Supabase Database Setup" section below for detailed instructions**
+
+6. Initialize the database:
 ```bash
-npm run db:migrate
+# Generate Prisma client
+npm run db:generate
+
+# Push schema to Supabase
+npm run db:push
 ```
 
-5. (Optional) Seed with sample data:
+7. (Optional) Seed with sample data:
 ```bash
 npm run seed
 ```
 
-6. Start the development server:
+8. Start the development server:
 ```bash
 npm run dev
 ```
 
-7. Open [http://localhost:3000](http://localhost:3000)
+9. Open [http://localhost:3000](http://localhost:3000)
 
 ## Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `DATABASE_URL` | SQLite database path | Yes |
-| `OPENAI_API_KEY` | OpenAI API key for AI analysis | No (uses mock mode) |
-| `MOCK_AI` | Force mock AI mode | No (default: true) |
+| `DATABASE_URL` | Supabase PostgreSQL connection string (pooled) | Yes |
+| `DIRECT_URL` | Supabase PostgreSQL direct connection (for migrations) | Yes |
+| `GROQ_API_KEY` | Groq API key for AI analysis | No (uses mock mode) |
+| `MOCK_AI` | Force mock AI mode | No (default: false) |
+| `NEXT_PUBLIC_BASE_URL` | Base URL for OCR API calls | No (default: http://localhost:3000) |
+
+## Supabase Database Setup
+
+### 1. Create a Supabase Project
+
+1. Go to https://supabase.com
+2. Sign up or log in
+3. Click "New Project"
+4. Choose your organization
+5. Enter project details:
+   - **Name**: docops-copilot (or your choice)
+   - **Database Password**: Generate a strong password (SAVE THIS!)
+   - **Region**: Choose closest to you
+   - **Pricing Plan**: Free tier works fine for development
+6. Click "Create new project"
+7. Wait 2-3 minutes for project to be provisioned
+
+### 2. Get Database Connection Strings
+
+1. In your Supabase project dashboard, go to **Settings** (gear icon)
+2. Click **Database** in the left sidebar
+3. Scroll to "Connection string" section
+4. You'll see two types of connection strings:
+
+#### Connection Pooling (DATABASE_URL)
+- Click on **"URI"** tab
+- Copy the connection string that looks like:
+  ```
+  postgresql://postgres.xxxxx:password@aws-0-region.pooler.supabase.com:5432/postgres
+  ```
+- This uses connection pooling (recommended for Next.js/Vercel)
+
+#### Direct Connection (DIRECT_URL)
+- Click on **"Direct connection"** 
+- Copy the connection string that looks like:
+  ```
+  postgresql://postgres:password@db.xxxxx.supabase.co:5432/postgres
+  ```
+- This is used for migrations
+
+### 3. Configure Your .env File
+
+Update your `.env` file in the project root:
+
+```env
+# Groq API Key
+GROQ_API_KEY=your_groq_api_key_here
+
+# Supabase Database URLs
+# Replace [YOUR-PASSWORD] with your database password
+# Replace [YOUR-PROJECT-REF] with your project reference
+DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"
+
+# Optional Settings
+MOCK_AI=false
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+```
+
+**Important**: Replace the placeholders:
+- `[YOUR-PASSWORD]` = Your database password
+- `[YOUR-PROJECT-REF]` = Your project reference (e.g., `abcdefghijklmnop`)
+
+### 4. Run Database Migrations
+
+```bash
+# Generate Prisma client for PostgreSQL
+npm run db:generate
+
+# Push schema to Supabase
+npm run db:push
+
+# Or use migrations (recommended for production)
+npx prisma migrate dev --name init
+```
+
+### 5. Seed the Database (Optional)
+
+```bash
+npm run seed
+```
+
+This will create 10 sample cases for testing.
+
+### 6. Verify Connection
+
+```bash
+# Open Prisma Studio to view your data
+npm run db:studio
+```
+
+You should see your Supabase database with the Case, AuditEvent, CaseNote, and Attachment tables.
+
+### Supabase Troubleshooting
+
+#### "Can't reach database server"
+- Check your DATABASE_URL is correct
+- Verify your database password
+- Make sure your Supabase project is running (green indicator in dashboard)
+
+#### "Connection pool timeout"
+- Use DIRECT_URL for migrations
+- Use DATABASE_URL (with pooling) for the application
+
+#### "SSL/TLS connection required"
+- Supabase requires SSL by default (already included in the connection strings)
+
+#### "Too many connections"
+- Supabase free tier has connection limits
+- Make sure you're using connection pooling (DATABASE_URL)
+- Close unused connections
+
+### Supabase Dashboard Features
+
+- **Table Editor**: View and edit data directly
+- **SQL Editor**: Run custom SQL queries
+- **Database**: Manage tables, triggers, functions
+- **Storage**: File storage (for future file uploads)
+- **Auth**: User authentication (if needed later)
+- **API**: Auto-generated REST and GraphQL APIs
+
+### Free Tier Limits
+
+- 500 MB database space
+- 2 GB bandwidth per month
+- 50,000 monthly active users
+- Unlimited API requests
+- Automatic backups (7 days)
+
+Perfect for development and small production deployments!
 
 ## Project Structure
 
@@ -175,6 +344,10 @@ The seed data includes 10 diverse sample documents:
 POST /api/analyze
 - Content-Type: multipart/form-data (file upload) or application/json (text)
 - Returns: AI analysis results
+
+POST /api/ocr
+- Content-Type: multipart/form-data (PDF file upload)
+- Returns: Extracted text using OCR
 ```
 
 ### Cases
@@ -205,7 +378,7 @@ GET    /api/stats          # Get dashboard statistics
 
 ## AI Mock Mode
 
-When running without an OpenAI API key (or with `MOCK_AI=true`), the system uses intelligent mock responses:
+When running without a Groq API key (or with `MOCK_AI=true`), the system uses intelligent mock responses:
 
 - Document type detection based on keyword analysis
 - Entity extraction using regex patterns
@@ -215,13 +388,31 @@ When running without an OpenAI API key (or with `MOCK_AI=true`), the system uses
 
 This allows full demo functionality without API costs.
 
+## OCR Text Extraction
+
+The system uses PyTesseract for OCR text extraction from PDF files:
+
+1. **Standard PDF extraction** is tried first (fast, works for text-based PDFs)
+2. **OCR extraction** is used as fallback for scanned/image-based PDFs
+3. PDFs are converted to images at 300 DPI for optimal OCR accuracy
+4. Text is extracted page by page and combined
+
+To test OCR directly:
+```bash
+python3 python-services/ocr_service.py path/to/document.pdf
+```
+
 ## Troubleshooting
 
 ### Database issues
 ```bash
-# Reset database
-rm prisma/dev.db
-npm run db:migrate
+# Reset database (Supabase)
+npx prisma migrate reset
+
+# Or just push schema changes
+npm run db:push
+
+# Re-seed data
 npm run seed
 ```
 

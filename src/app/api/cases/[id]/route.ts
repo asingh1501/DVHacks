@@ -50,13 +50,13 @@ export async function GET(
       ownerTeam: caseData.ownerTeam as CaseWithRelations["ownerTeam"],
       priority: caseData.priority as CaseWithRelations["priority"],
       status: caseData.status as CaseWithRelations["status"],
-      auditEvents: caseData.auditEvents.map((e) => ({
+      auditEvents: caseData.auditEvents.map((e: any) => ({
         ...e,
         eventType: e.eventType as CaseWithRelations["auditEvents"][number]["eventType"],
         metadata: safeJsonParse(e.metadata || "null", null),
         changes: safeJsonParse(e.changes || "null", null),
       })),
-      notes: caseData.notes.map((n) => ({
+      notes: caseData.notes.map((n: any) => ({
         ...n,
         noteType: n.noteType as CaseWithRelations["notes"][number]["noteType"],
       })),

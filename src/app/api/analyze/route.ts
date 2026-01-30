@@ -2,8 +2,73 @@ import { NextRequest, NextResponse } from "next/server";
 import { analyzeDocument } from "@/lib/ai/analyzer";
 import { parseDocument, validateFileType, validateFileSize, SupportedFileType } from "@/lib/ai/documentParser";
 import { AIAnalysisResult, DocType } from "@/lib/types";
+import { spawn } from "child_process";
+import { writeFile, unlink } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
 
 export const maxDuration = 60;
+
+/**
+ * Extract text from PDF using Python OCR service
+ */
+async function extractPdfWithOCR(fileBuffer: Buffer): Promise<string> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const tempFilePath = join(tmpdir(), `ocr-${Date.now()}.pdf`);
+      await writeFile(tempFilePath, fileBuffer);
+
+      const scriptPath = join(process.cwd(), "python-services", "ocr_service.py");
+      const pythonProcess = spawn("python3", [scriptPath, tempFilePath]);
+
+      let stdout = "";
+      let stderr = "";
+
+      pythonProcess.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      pythonProcess.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      pythonProcess.on("close", async (code) => {
+        try {
+          await unlink(tempFilePath);
+        } catch (e) {
+          console.error("Failed to delete temp file:", e);
+        }
+
+        if (code !== 0) {
+          reject(new Error(`OCR process failed: ${stderr}`));
+          return;
+        }
+
+        try {
+          const result = JSON.parse(stdout);
+          if (result.success && result.text) {
+            resolve(result.text);
+          } else {
+            reject(new Error(result.error || "OCR extraction failed"));
+          }
+        } catch (e) {
+          reject(new Error(`Failed to parse OCR output: ${stdout}`));
+        }
+      });
+
+      pythonProcess.on("error", async (error) => {
+        try {
+          await unlink(tempFilePath);
+        } catch (e) {
+          console.error("Failed to delete temp file:", e);
+        }
+        reject(error);
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,6 +111,22 @@ export async function POST(request: NextRequest) {
         // Parse document
         const parsed = await parseDocument(file, fileType);
         text = parsed.text;
+        
+        // If PDF has minimal text, try OCR
+        if (fileType === "pdf" && text.length < 100) {
+          console.log("PDF has minimal text, attempting OCR extraction...");
+          try {
+            const buffer = Buffer.from(await file.arrayBuffer());
+            const ocrText = await extractPdfWithOCR(buffer);
+            if (ocrText && ocrText.length > text.length) {
+              console.log("OCR extraction successful, using OCR text");
+              text = ocrText;
+            }
+          } catch (ocrError) {
+            console.error("OCR extraction failed:", ocrError);
+            // Continue with whatever text we have
+          }
+        }
       } else if (pastedText) {
         text = pastedText.trim();
         fileType = "paste";
@@ -97,8 +178,15 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Analysis error:", error);
+    console.error("Error details:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
-      { error: "Failed to analyze document. Please try again." },
+      { 
+        error: error instanceof Error ? error.message : "Failed to analyze document. Please try again.",
+        details: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
