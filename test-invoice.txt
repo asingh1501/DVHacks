@@ -1,0 +1,35 @@
+Invoice #12345
+
+Date: January 30, 2026
+Due Date: February 15, 2026
+
+Bill To:
+Acme Corporation
+123 Main Street
+New York, NY 10001
+
+From:
+Tech Services Inc.
+456 Oak Avenue
+San Francisco, CA 94102
+
+Description                  Quantity    Unit Price    Total
+-------------------------   ---------   -----------   -------
+Software Development           40 hrs      $150.00    $6,000.00
+Code Review                    10 hrs      $125.00    $1,250.00
+Technical Consulting           15 hrs      $175.00    $2,625.00
+
+                                          Subtotal:    $9,875.00
+                                          Tax (8%):      $790.00
+                                          ============
+                                          Total Due:  $10,665.00
+
+Payment Terms: Net 30 days
+Payment Methods: Check, Wire Transfer, ACH
+
+Notes:
+- Please include invoice number on payment
+- Late payments subject to 1.5% monthly interest
+- For questions, contact billing@techservices.com
+
+Thank you for your business!
