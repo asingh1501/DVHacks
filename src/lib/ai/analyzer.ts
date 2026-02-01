@@ -53,6 +53,7 @@ Respond with a JSON object matching this exact schema:
   "draftEmail": {"to": ["recipients"], "cc": [], "subject": "subject line", "body": "email body in markdown", "tone": "formal|professional|friendly|urgent"},
   "confidence": 0.0-1.0,
   "rationale": "2-3 sentences explaining classification decisions",
+  "decisionSignals": ["3-5 short bullet statements justifying docType, ownerTeam, and priority"],
   "suggestedTags": ["relevant tags"],
   "estimatedProcessingTime": "e.g. 2-3 business days"
 }`;
@@ -136,6 +137,7 @@ function validateAndNormalizeResult(result: Partial<AIAnalysisResult>): AIAnalys
     },
     confidence: typeof result.confidence === "number" ? result.confidence : 0.85,
     rationale: result.rationale || "Analysis completed.",
+    decisionSignals: result.decisionSignals || [],
     suggestedTags: result.suggestedTags || [],
     estimatedProcessingTime: result.estimatedProcessingTime,
   };

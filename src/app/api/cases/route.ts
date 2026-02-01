@@ -95,12 +95,26 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { fileName, fileType, originalText, analysisResult, userEdits } = body as {
+    const {
+      fileName,
+      fileType,
+      originalText,
+      analysisResult,
+      userEdits,
+      classificationConfirmation,
+    } = body as {
       fileName?: string;
       fileType?: string;
       originalText: string;
       analysisResult: AIAnalysisResult;
       userEdits?: Partial<AIAnalysisResult>;
+      classificationConfirmation?: {
+        ownerTeam: string;
+        priority: string;
+        reason?: string;
+        hasOverride?: boolean;
+        confirmedAt?: string;
+      };
     };
 
     if (!originalText || !analysisResult) {
@@ -128,6 +142,19 @@ export async function POST(request: NextRequest) {
     // Merge user edits with AI analysis
     const mergedResult = userEdits ? { ...analysisResult, ...userEdits } : analysisResult;
 
+    const editedFields =
+      classificationConfirmation && classificationConfirmation.confirmedAt
+        ? {
+            classification: {
+              ownerTeam: mergedResult.ownerTeam,
+              priority: mergedResult.priority,
+              reason: classificationConfirmation.reason || "",
+              confirmedAt: classificationConfirmation.confirmedAt,
+              hasOverride: !!classificationConfirmation.hasOverride,
+            },
+          }
+        : null;
+
     // Create case
     const newCase = await prisma.case.create({
       data: {
@@ -151,6 +178,7 @@ export async function POST(request: NextRequest) {
         draftEmail: JSON.stringify(mergedResult.draftEmail),
         suggestedActions: JSON.stringify(mergedResult.recommendedActions),
         userEdits: userEdits ? JSON.stringify(userEdits) : null,
+        editedFields: editedFields ? JSON.stringify(editedFields) : null,
         tags: JSON.stringify(mergedResult.suggestedTags),
         status: "new",
       },
@@ -170,6 +198,33 @@ export async function POST(request: NextRequest) {
         }),
       },
     });
+
+    if (classificationConfirmation && classificationConfirmation.confirmedAt) {
+      await prisma.auditEvent.create({
+        data: {
+          caseId: newCase.id,
+          eventType: "edited",
+          actor: "user",
+          description: classificationConfirmation.hasOverride
+            ? "Classification overridden"
+            : "Classification confirmed",
+          metadata: JSON.stringify({
+            reason: classificationConfirmation.reason || "",
+            confirmedAt: classificationConfirmation.confirmedAt,
+          }),
+          changes: JSON.stringify({
+            before: {
+              ownerTeam: analysisResult.ownerTeam,
+              priority: analysisResult.priority,
+            },
+            after: {
+              ownerTeam: mergedResult.ownerTeam,
+              priority: mergedResult.priority,
+            },
+          }),
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,

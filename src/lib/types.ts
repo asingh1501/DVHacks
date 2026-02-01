@@ -110,6 +110,7 @@ export interface AIAnalysisResult {
   draftEmail: DraftEmail;
   confidence: number;
   rationale: string;
+  decisionSignals?: string[];
   suggestedTags: string[];
   estimatedProcessingTime?: string;
 }

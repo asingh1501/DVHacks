@@ -7,7 +7,7 @@ import { AnalysisResults } from "@/components/document/AnalysisResults";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AIAnalysisResult } from "@/lib/types";
+import { AIAnalysisResult, OwnerTeam, Priority } from "@/lib/types";
 import { toast } from "sonner";
 import {
   FileText,
@@ -35,6 +35,14 @@ export default function HomePage() {
   const [analysis, setAnalysis] = useState<AIAnalysisResult | null>(null);
   const [metadata, setMetadata] = useState<AnalysisMetadata | null>(null);
   const [originalText, setOriginalText] = useState<string>("");
+  const [userEdits, setUserEdits] = useState<Partial<AIAnalysisResult> | null>(null);
+  const [classificationConfirmation, setClassificationConfirmation] = useState<{
+    ownerTeam: OwnerTeam;
+    priority: Priority;
+    reason: string;
+    hasOverride: boolean;
+    confirmedAt: string;
+  } | null>(null);
 
   // Fetch recent cases
   const { data: recentCases } = useQuery({
@@ -49,6 +57,8 @@ export default function HomePage() {
   const handleAnalyze = async (file: File | null, text: string | null) => {
     setIsAnalyzing(true);
     setAnalysis(null);
+    setUserEdits(null);
+    setClassificationConfirmation(null);
 
     try {
       let response: Response;
@@ -94,7 +104,7 @@ export default function HomePage() {
     }
   };
 
-  const handleCreateCase = async () => {
+  const handleCreateCase = async (mode: "detail" | "queue" = "detail") => {
     if (!analysis) return;
 
     setIsCreating(true);
@@ -108,6 +118,8 @@ export default function HomePage() {
           fileType: metadata?.fileType,
           originalText: originalText || analysis.summary,
           analysisResult: analysis,
+          userEdits: userEdits || undefined,
+          classificationConfirmation: classificationConfirmation || undefined,
         }),
       });
 
@@ -127,7 +139,11 @@ export default function HomePage() {
       }
 
       toast.success("Case created successfully!");
-      router.push(`/cases/${data.case.id}`);
+      if (mode === "queue") {
+        router.push("/cases");
+      } else {
+        router.push(`/cases/${data.case.id}`);
+      }
     } catch (error) {
       console.error("Create case error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to create case");
@@ -140,6 +156,8 @@ export default function HomePage() {
     setAnalysis(null);
     setMetadata(null);
     setOriginalText("");
+    setUserEdits(null);
+    setClassificationConfirmation(null);
   };
 
   return (
@@ -186,6 +204,14 @@ export default function HomePage() {
                 analysis={analysis}
                 onCreateCase={handleCreateCase}
                 isCreating={isCreating}
+                onConfirmClassification={(payload) => {
+                  setClassificationConfirmation(payload);
+                  setUserEdits(
+                    payload.hasOverride
+                      ? { ownerTeam: payload.ownerTeam, priority: payload.priority }
+                      : null
+                  );
+                }}
               />
             </div>
           ) : (

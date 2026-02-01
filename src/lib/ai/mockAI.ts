@@ -317,6 +317,8 @@ export function getMockAnalysis(text: string, docTypeHint?: DocType): AIAnalysis
   // Calculate confidence based on how well the document matches the type
   const confidence = docType === "other" ? 0.65 : 0.85 + Math.random() * 0.1;
 
+  const decisionSignals = generateDecisionSignals(text, docType, ownerTeam, priority, entities);
+
   return {
     docType,
     summary,
@@ -331,7 +333,64 @@ export function getMockAnalysis(text: string, docTypeHint?: DocType): AIAnalysis
     draftEmail,
     confidence,
     rationale: `Document classified as ${docType} based on content analysis. Assigned to ${ownerTeam} team with ${priority} priority due to content indicators.`,
+    decisionSignals,
     suggestedTags: template.suggestedTags || [docType],
     estimatedProcessingTime: template.estimatedProcessingTime || "2-3 business days",
   };
+}
+
+function generateDecisionSignals(
+  text: string,
+  docType: DocType,
+  ownerTeam: string,
+  priority: string,
+  entities: Entities
+): string[] {
+  const lowerText = text.toLowerCase();
+  const signals: string[] = [];
+
+  if (docType === "contract" && /agreement|terms|obligations|parties|whereas/.test(lowerText)) {
+    signals.push("Detected contract-style language (terms, obligations, parties).");
+  }
+  if (docType === "invoice" && /invoice|amount due|payment terms|bill to/.test(lowerText)) {
+    signals.push("Found billing cues like invoice terms and payment language.");
+  }
+  if (docType === "purchase_order" && /purchase order|po#|vendor|unit price/.test(lowerText)) {
+    signals.push("Purchase order indicators present (PO references, vendor, unit price).");
+  }
+  if (docType === "resume" && /experience|education|skills|employment/.test(lowerText)) {
+    signals.push("Resume-like sections detected (experience, education, skills).");
+  }
+  if (docType === "incident_report" && /incident|root cause|severity|affected/.test(lowerText)) {
+    signals.push("Incident language detected (severity, root cause, affected systems).");
+  }
+
+  if (ownerTeam === "Unknown") {
+    signals.push("No explicit department keywords found for routing.");
+  } else if (ownerTeam === "Legal") {
+    signals.push("Legal terminology suggests routing to Legal.");
+  } else if (ownerTeam === "AP" || ownerTeam === "Finance") {
+    signals.push("Financial terms suggest routing to finance-related teams.");
+  }
+
+  if (priority === "urgent") {
+    signals.push("Urgency inferred from terms like 'urgent', 'ASAP', or 'immediately'.");
+  } else if (priority === "high") {
+    signals.push("Deadline or high-priority wording suggests elevated urgency.");
+  } else if (priority === "medium" && entities.dates.length > 0) {
+    signals.push("Dates detected without explicit penalties; set to medium urgency.");
+  }
+
+  if (entities.dates.length > 0 && signals.length < 3) {
+    signals.push("Document includes dates and timing indicators.");
+  }
+  if (entities.amounts.length > 0 && signals.length < 3) {
+    signals.push("Monetary amounts detected in the document.");
+  }
+
+  if (signals.length === 0) {
+    signals.push("Classification based on overall structure and keyword patterns.");
+  }
+
+  return Array.from(new Set(signals)).slice(0, 4);
 }
