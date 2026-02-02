@@ -34,6 +34,8 @@ export async function GET(
     }
 
     // Parse JSON fields
+    type AuditEventType = NonNullable<CaseWithRelations["auditEvents"]>[number]["eventType"];
+    type NoteType = NonNullable<CaseWithRelations["notes"]>[number]["noteType"];
     const parsedCase: CaseWithRelations = {
       ...caseData,
       entities: safeJsonParse(caseData.entities, { people: [], organizations: [], dates: [], amounts: [], ids: [], locations: [], emails: [], phones: [] }),
@@ -52,13 +54,13 @@ export async function GET(
       status: caseData.status as CaseWithRelations["status"],
       auditEvents: caseData.auditEvents.map((e: any) => ({
         ...e,
-        eventType: e.eventType as CaseWithRelations["auditEvents"][number]["eventType"],
+        eventType: e.eventType as AuditEventType,
         metadata: safeJsonParse(e.metadata || "null", null),
         changes: safeJsonParse(e.changes || "null", null),
       })),
       notes: caseData.notes.map((n: any) => ({
         ...n,
-        noteType: n.noteType as CaseWithRelations["notes"][number]["noteType"],
+        noteType: n.noteType as NoteType,
       })),
       attachments: caseData.attachments,
     };

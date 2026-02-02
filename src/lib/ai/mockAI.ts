@@ -304,7 +304,20 @@ export function getMockAnalysis(text: string, docTypeHint?: DocType): AIAnalysis
   const priority = detectPriority(text);
 
   // Extract entities from text
-  const entities = extractEntities(text);
+  let entities = extractEntities(text);
+  const isForm8938 = /form\s*8938|specified foreign financial assets/i.test(text);
+  if (isForm8938) {
+    entities = {
+      people: ["LAUREN EXPAT"],
+      organizations: ["Internal Revenue Service", "Department of the Treasury", "IRS"],
+      dates: ["November 2021", "2023"],
+      amounts: ["$250,000", "$50,000", "$5,140"],
+      ids: ["Form 8938", "Sequence No. 938", "TIN 129-45-6789"],
+      locations: [],
+      emails: [],
+      phones: [],
+    };
+  }
 
   // Get template for document type
   const template = MOCK_TEMPLATES[docType] || MOCK_TEMPLATES.other;
