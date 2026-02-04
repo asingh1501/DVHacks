@@ -10,8 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "DocOps Copilot - AI-Powered Document Intelligence",
-  description: "Transform unstructured documents into actionable intelligence with AI-powered analysis, intelligent routing, and workflow automation.",
+  title: "SLATE by Walmart - Smart Document Intelligence",
+  description: "SLATE — Walmart's intelligent document processing platform. Streamline, classify, and route documents with AI-powered analysis and workflow automation.",
 };
 
 export default function RootLayout({
@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased bg-gray-50 min-h-screen`}>
+      <body className={`${inter.variable} font-sans antialiased bg-slate-50 min-h-screen`}>
         <Providers>
           <Header />
           <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">

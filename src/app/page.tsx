@@ -11,7 +11,6 @@ import { AIAnalysisResult, OwnerTeam, Priority } from "@/lib/types";
 import { toast } from "sonner";
 import {
   FileText,
-  Sparkles,
   Zap,
   Shield,
   ArrowRight,
@@ -19,6 +18,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import Link from "next/link";
+import { WalmartSpark } from "@/components/WalmartLogo";
 import { useQuery } from "@tanstack/react-query";
 
 interface AnalysisMetadata {
@@ -164,18 +164,17 @@ export default function HomePage() {
     <div className="w-full max-w-7xl mx-auto">
       {/* Hero Section */}
       {!analysis && (
-        <div className="text-center mb-8 px-4">
-          <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm mb-4">
-            <Sparkles className="w-4 h-4" />
-            AI-Powered Document Intelligence
+        <div className="text-center mb-10 px-4">
+          <div className="inline-flex items-center gap-2 bg-[#0071DC] text-white px-4 py-1.5 rounded-full text-sm font-medium mb-5 shadow-sm">
+            <WalmartSpark className="w-4 h-4 text-[#FFC220]" />
+            Powered by Walmart AI
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Transform Documents into
-            <span className="text-blue-600"> Actionable Intelligence</span>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">
+            Meet <span className="text-[#0071DC]">SLATE</span>
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Upload any document and let AI extract data, classify content, detect risks,
-            and generate actionable workflows automatically.
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
+            Walmart&apos;s smart document intelligence layer. Upload, classify,
+            route, and action — all in one place.
           </p>
         </div>
       )}
@@ -221,36 +220,36 @@ export default function HomePage() {
           {/* Features (shown when no analysis) */}
           {!analysis && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-              <Card>
+              <Card className="border-t-2 border-t-[#0071DC]">
                 <CardContent className="pt-6">
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mb-4">
-                    <FileText className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 rounded-full bg-[#0071DC] flex items-center justify-center mb-4">
+                    <FileText className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="font-semibold mb-2">Universal Parsing</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="font-bold mb-2">Universal Parsing</h3>
+                  <p className="text-sm text-gray-500">
                     Process PDFs, DOCX, and text files. Extract entities, dates, and amounts automatically.
                   </p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-t-2 border-t-[#FFC220]">
                 <CardContent className="pt-6">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center mb-4">
-                    <Zap className="w-5 h-5 text-green-600" />
+                  <div className="w-10 h-10 rounded-full bg-[#FFC220] flex items-center justify-center mb-4">
+                    <Zap className="w-5 h-5 text-[#004C91]" />
                   </div>
-                  <h3 className="font-semibold mb-2">Smart Routing</h3>
-                  <p className="text-sm text-gray-600">
-                    AI classifies documents and suggests the right team and priority level.
+                  <h3 className="font-bold mb-2">Smart Routing</h3>
+                  <p className="text-sm text-gray-500">
+                    AI classifies documents and routes to the right Walmart team with priority.
                   </p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-t-2 border-t-[#004C91]">
                 <CardContent className="pt-6">
-                  <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
-                    <Shield className="w-5 h-5 text-purple-600" />
+                  <div className="w-10 h-10 rounded-full bg-[#004C91] flex items-center justify-center mb-4">
+                    <Shield className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="font-semibold mb-2">Risk Detection</h3>
-                  <p className="text-sm text-gray-600">
-                    Identify missing information, compliance issues, and potential risks.
+                  <h3 className="font-bold mb-2">Risk Detection</h3>
+                  <p className="text-sm text-gray-500">
+                    Flag compliance gaps, missing fields, and potential risks before they escalate.
                   </p>
                 </CardContent>
               </Card>
@@ -302,34 +301,34 @@ export default function HomePage() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  No cases yet. Upload a document to get started!
+                  No cases yet. Upload a document to get started with SLATE.
                 </p>
               )}
             </CardContent>
           </Card>
 
           {/* Quick Tips */}
-          <Card>
+          <Card className="bg-[#0071DC] text-white border-none">
             <CardHeader>
-              <CardTitle className="text-lg">Quick Tips</CardTitle>
+              <CardTitle className="text-lg text-white">How SLATE Works</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3 text-sm">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Drag and drop files or paste text directly</span>
+                  <CheckCircle2 className="w-4 h-4 text-[#FFC220] mt-0.5 flex-shrink-0" />
+                  <span className="text-white/90">Drag and drop files or paste text directly</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Supports PDF, DOCX, and TXT formats</span>
+                  <CheckCircle2 className="w-4 h-4 text-[#FFC220] mt-0.5 flex-shrink-0" />
+                  <span className="text-white/90">Supports PDF, DOCX, and TXT formats</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Review and edit AI suggestions before saving</span>
+                  <CheckCircle2 className="w-4 h-4 text-[#FFC220] mt-0.5 flex-shrink-0" />
+                  <span className="text-white/90">Review and edit AI suggestions before saving</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>All changes are tracked in the audit trail</span>
+                  <CheckCircle2 className="w-4 h-4 text-[#FFC220] mt-0.5 flex-shrink-0" />
+                  <span className="text-white/90">Full audit trail for every decision</span>
                 </li>
               </ul>
             </CardContent>

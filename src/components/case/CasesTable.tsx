@@ -186,7 +186,7 @@ export function CasesTable({
               key={caseItem.id}
               className={cn(
                 "hover:bg-gray-50 cursor-pointer",
-                selectedIds.includes(caseItem.id) && "bg-blue-50"
+                selectedIds.includes(caseItem.id) && "bg-[#0071DC]/10"
               )}
             >
               {onSelectionChange && (

@@ -25,41 +25,41 @@ export function formatDate(date: Date | string, formatStr: string = "MMM d, yyyy
   return format(d, formatStr)
 }
 
-// Priority color mapping
+// Priority color mapping (Walmart theme)
 export function getPriorityColor(priority: Priority): string {
   const colors: Record<Priority, string> = {
     low: "bg-gray-100 text-gray-800",
-    medium: "bg-blue-100 text-blue-800",
+    medium: "bg-[#0071DC]/15 text-[#0071DC]",
     high: "bg-orange-100 text-orange-800",
     urgent: "bg-red-100 text-red-800",
   }
   return colors[priority]
 }
 
-// Status color mapping
+// Status color mapping (Walmart theme)
 export function getStatusColor(status: CaseStatus): string {
   const colors: Record<CaseStatus, string> = {
     new: "bg-purple-100 text-purple-800",
-    in_progress: "bg-blue-100 text-blue-800",
-    pending_review: "bg-yellow-100 text-yellow-800",
+    in_progress: "bg-[#0071DC]/15 text-[#0071DC]",
+    pending_review: "bg-[#FFC220]/20 text-[#996600]",
     resolved: "bg-green-100 text-green-800",
     archived: "bg-gray-100 text-gray-800",
   }
   return colors[status]
 }
 
-// Team color mapping
+// Team color mapping (Walmart theme)
 export function getTeamColor(team: OwnerTeam): string {
   const colors: Record<OwnerTeam, string> = {
     AP: "bg-purple-500",
-    Legal: "bg-blue-700",
+    Legal: "bg-[#004C91]",
     HR: "bg-teal-500",
     Ops: "bg-orange-500",
     Support: "bg-pink-500",
     Sales: "bg-green-600",
-    IT: "bg-indigo-500",
+    IT: "bg-[#0071DC]",
     Finance: "bg-emerald-600",
-    Procurement: "bg-amber-600",
+    Procurement: "bg-[#FFC220] text-gray-900",
     Unknown: "bg-gray-500",
   }
   return colors[team]

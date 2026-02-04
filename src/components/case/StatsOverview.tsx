@@ -61,8 +61,8 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
       title: "Total Cases",
       value: stats.total,
       icon: FileText,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-[#0071DC]",
+      bg: "bg-[#0071DC]/10",
     },
     {
       title: "Today",
@@ -118,7 +118,7 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
           <CardContent>
             <div className="space-y-3">
               <StatusBar label="New" value={stats.byStatus.new} total={stats.total} color="bg-purple-500" />
-              <StatusBar label="In Progress" value={stats.byStatus.in_progress} total={stats.total} color="bg-blue-500" />
+              <StatusBar label="In Progress" value={stats.byStatus.in_progress} total={stats.total} color="bg-[#0071DC]" />
               <StatusBar label="Pending Review" value={stats.byStatus.pending_review} total={stats.total} color="bg-yellow-500" />
               <StatusBar label="Resolved" value={stats.byStatus.resolved} total={stats.total} color="bg-green-500" />
               <StatusBar label="Archived" value={stats.byStatus.archived} total={stats.total} color="bg-gray-400" />
@@ -135,7 +135,7 @@ export function StatsOverview({ stats, isLoading }: StatsOverviewProps) {
             <div className="space-y-3">
               <StatusBar label="Urgent" value={stats.byPriority.urgent} total={stats.total} color="bg-red-500" />
               <StatusBar label="High" value={stats.byPriority.high} total={stats.total} color="bg-orange-500" />
-              <StatusBar label="Medium" value={stats.byPriority.medium} total={stats.total} color="bg-blue-500" />
+              <StatusBar label="Medium" value={stats.byPriority.medium} total={stats.total} color="bg-[#0071DC]" />
               <StatusBar label="Low" value={stats.byPriority.low} total={stats.total} color="bg-gray-400" />
             </div>
           </CardContent>

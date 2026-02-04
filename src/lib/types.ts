@@ -1,4 +1,4 @@
-// DocOps Copilot - Type Definitions
+// SLATE by Walmart - Type Definitions
 
 export type DocType =
   | "invoice"

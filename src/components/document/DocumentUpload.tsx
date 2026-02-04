@@ -51,7 +51,7 @@ export function DocumentUpload({ onAnalyze, isLoading }: DocumentUploadProps) {
         return <FileText className="w-8 h-8 text-red-500" />;
       case "docx":
       case "doc":
-        return <FileType className="w-8 h-8 text-blue-500" />;
+        return <FileType className="w-8 h-8 text-[#0071DC]" />;
       case "txt":
         return <File className="w-8 h-8 text-gray-500" />;
       default:
@@ -78,8 +78,8 @@ export function DocumentUpload({ onAnalyze, isLoading }: DocumentUploadProps) {
               className={cn(
                 "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
                 isDragActive
-                  ? "border-blue-500 bg-blue-50"
-                  : "border-gray-300 hover:border-gray-400",
+                  ? "border-[#0071DC] bg-[#0071DC]/5"
+                  : "border-gray-300 hover:border-[#0071DC]/50",
                 selectedFile && "border-green-500 bg-green-50"
               )}
             >
@@ -143,7 +143,7 @@ export function DocumentUpload({ onAnalyze, isLoading }: DocumentUploadProps) {
         </Tabs>
 
         <Button
-          className="w-full mt-6"
+          className="w-full mt-6 bg-[#0071DC] hover:bg-[#004C91] text-white font-semibold shadow-sm"
           size="lg"
           onClick={handleAnalyze}
           disabled={!canAnalyze || isLoading}
@@ -151,12 +151,12 @@ export function DocumentUpload({ onAnalyze, isLoading }: DocumentUploadProps) {
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Analyzing...
+              SLATE is analyzing...
             </>
           ) : (
             <>
               <FileText className="w-4 h-4 mr-2" />
-              Analyze Document
+              Analyze with SLATE
             </>
           )}
         </Button>

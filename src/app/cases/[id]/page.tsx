@@ -214,7 +214,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
                 {data.id.slice(0, 8)}
                 <button
                   onClick={() => copyToClipboard(data.id)}
-                  className="ml-1 hover:text-blue-600"
+                  className="ml-1 hover:text-[#0071DC]"
                 >
                   <Copy className="w-3 h-3" />
                 </button>
@@ -596,7 +596,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
                           {event.actor === "system" ? (
                             <Clock className="w-5 h-5 text-gray-500" />
                           ) : event.actor === "ai" ? (
-                            <FileText className="w-5 h-5 text-blue-500" />
+                            <FileText className="w-5 h-5 text-[#0071DC]" />
                           ) : (
                             <User className="w-5 h-5 text-green-500" />
                           )}
@@ -781,11 +781,11 @@ function RiskFlagCard({ flag }: { flag: RiskFlag }) {
     },
     warning: {
       icon: <AlertCircle className="w-5 h-5" />,
-      className: "border-yellow-200 bg-yellow-50 text-yellow-800",
+      className: "border-[#FFC220]/30 bg-[#FFC220]/10 text-[#996600]",
     },
     info: {
       icon: <Info className="w-5 h-5" />,
-      className: "border-blue-200 bg-blue-50 text-blue-800",
+      className: "border-[#0071DC]/20 bg-[#0071DC]/10 text-[#0071DC]",
     },
   };
 

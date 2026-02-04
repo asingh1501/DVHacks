@@ -6,7 +6,7 @@ const groq = process.env.GROQ_API_KEY
   ? new Groq({ apiKey: process.env.GROQ_API_KEY })
   : null;
 
-const AI_SYSTEM_PROMPT = `You are an expert document analyst for DocOps Copilot, an AI-powered document intelligence platform.
+const AI_SYSTEM_PROMPT = `You are an expert document analyst for SLATE, Walmart's AI-powered document intelligence platform.
 Your task is to analyze documents and extract structured information.
 
 Analyze the document and provide:

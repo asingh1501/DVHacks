@@ -131,7 +131,7 @@ export function AnalysisResults({
       case "warning":
         return <AlertCircle className="w-4 h-4 text-yellow-500" />;
       case "info":
-        return <Info className="w-4 h-4 text-blue-500" />;
+        return <Info className="w-4 h-4 text-[#0071DC]" />;
     }
   };
 
@@ -142,7 +142,7 @@ export function AnalysisResults({
       case "warning":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "info":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-[#0071DC]/10 text-[#0071DC] border-[#0071DC]/20";
     }
   };
 
@@ -422,7 +422,7 @@ export function AnalysisResults({
                     <Badge
                       variant="outline"
                       className={cn(
-                        "text-[10px] uppercase tracking-wide border-blue-200 text-blue-700 transition-all duration-500",
+                        "text-[10px] uppercase tracking-wide border-[#0071DC]/30 text-[#0071DC] transition-all duration-500",
                         isLoaded ? "opacity-100 scale-100" : "opacity-0 scale-95"
                       )}
                     >
@@ -573,7 +573,7 @@ export function AnalysisResults({
               </div>
               <div className="mt-3 space-y-2 text-sm text-gray-700">
                 <div className="flex items-start gap-2">
-                  <span className="mt-0.5 h-2 w-2 rounded-full bg-blue-400" />
+                  <span className="mt-0.5 h-2 w-2 rounded-full bg-[#0071DC]" />
                   <div>
                     <p className="font-medium text-gray-800">AI suggestion</p>
                     <p className="text-xs text-gray-500">
@@ -583,7 +583,7 @@ export function AnalysisResults({
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="mt-0.5 h-2 w-2 rounded-full bg-amber-400" />
+                  <span className="mt-0.5 h-2 w-2 rounded-full bg-[#FFC220]" />
                   <div>
                     <p className="font-medium text-gray-800">Human override</p>
                     <p className="text-xs text-gray-500">
@@ -878,7 +878,7 @@ export function AnalysisResults({
       {onCreateCase && (
         <div className="space-y-3">
           <Button
-            className="w-full"
+            className="w-full bg-[#0071DC] hover:bg-[#004C91] text-white font-semibold shadow-sm"
             size="lg"
             onClick={() => handleCreateWorkflow("detail")}
             disabled={isCreating}
@@ -886,7 +886,7 @@ export function AnalysisResults({
             {isCreating ? "Sending to Team..." : "Send to Team"}
           </Button>
           <Button
-            className="w-full"
+            className="w-full border-[#0071DC] text-[#0071DC] hover:bg-[#0071DC]/5 font-semibold"
             size="lg"
             variant="outline"
             onClick={() => handleCreateWorkflow("queue")}
@@ -905,8 +905,8 @@ export function AnalysisResults({
                       </span>
                     </TooltipTrigger>
                     <TooltipContent sideOffset={6}>
-                      Designed for high-volume enterprise document intake (e.g.,
-                      procurement, vendor disputes, compliance reports).
+                      Built for Walmart-scale document intake — procurement,
+                      vendor disputes, compliance reports, and more.
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -930,8 +930,8 @@ export function AnalysisResults({
             </div>
           </div>
           <p className="text-xs text-gray-500 text-center">
-            Designed for high-volume enterprise document intake (e.g., procurement, vendor disputes,
-            compliance reports).
+            Built for Walmart-scale document intake — procurement, vendor disputes,
+            compliance reports, and more.
           </p>
         </div>
       )}
