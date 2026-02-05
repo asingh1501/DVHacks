@@ -329,6 +329,10 @@ export default function HomePage() {
                   <CheckCircle2 className="w-4 h-4 text-[#FFC220] mt-0.5 flex-shrink-0" />
                   <span className="text-white/90">Full audit trail for every decision</span>
                 </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#FFC220] mt-0.5 flex-shrink-0" />
+                  <span className="text-white/90">Syncs extracted data to TRIRIGA</span>
+                </li>
               </ul>
             </CardContent>
           </Card>

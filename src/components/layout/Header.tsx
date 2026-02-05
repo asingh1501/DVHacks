@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { FolderOpen, Plus } from "lucide-react";
+import { FolderOpen, Plus, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { WalmartSpark } from "@/components/WalmartLogo";
 
@@ -24,7 +24,7 @@ export function Header() {
           <Link href="/" className="flex items-center gap-3">
             <WalmartSpark className="w-8 h-8 text-[#FFC220]" />
             <div className="flex items-baseline gap-1.5">
-              <span className="font-black text-lg tracking-tight text-[#004C91]">
+              <span className="font-black text-lg tracking-tight text-[#0071DC]">
                 SLATE
               </span>
               <span className="hidden sm:inline text-[10px] font-semibold uppercase tracking-widest text-gray-400">
@@ -32,6 +32,11 @@ export function Header() {
               </span>
             </div>
           </Link>
+
+          <div className="hidden md:flex items-center gap-1.5 text-xs text-gray-400">
+            <Database className="w-3 h-3" />
+            <span className="font-medium">TRIRIGA Connected</span>
+          </div>
 
           <nav className="flex items-center gap-1">
             {navItems.map((item) => (

@@ -40,6 +40,9 @@ model Case {
   draftEmail       String // JSON: {to, cc, subject, body, tone}
   suggestedActions String // JSON: {type, title, description, priority}[]
 
+  // TRIRIGA Lease Fields
+  leaseFields String? // JSON: Lease-specific fields for TRIRIGA sync
+
   // User Edits & Overrides
   userEdits    String? // JSON: Tracks what user changed from AI suggestions
   editedFields String? // JSON: Field-level edit history

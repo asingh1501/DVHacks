@@ -16,7 +16,8 @@ CRITICAL RULES:
 - The checklist must contain actionable steps specific to THIS document's content.
 - The draft email must reference the actual parties, amounts, and dates from the document.
 - If information for a field genuinely does not exist in the document, return an empty array — do NOT fabricate data.
-- For requiredFieldsMissing, think about what fields you would EXPECT for this document type that are absent (e.g. an invoice missing a PO number, a contract missing an effective date).`;
+- For requiredFieldsMissing, think about what fields you would EXPECT for this document type that are absent (e.g. an invoice missing a PO number, a contract missing an effective date).
+- ALWAYS populate the "leaseFields" object. For EVERY lease field, look hard in the document for it. If a lease field is not present, set it to null. These are the fields TRIRIGA needs for lease administration, so extract them precisely.`;
 
 const AI_USER_PROMPT = (text: string) => `Read this document carefully and extract every piece of information from it.
 
@@ -56,7 +57,28 @@ Respond with a JSON object matching this EXACT schema. Every field must reflect 
   "rationale": "2-3 sentences explaining WHY you classified it this way, citing specific evidence from the text",
   "decisionSignals": ["3-5 bullet statements citing specific phrases or data points from the document that drove your classification"],
   "suggestedTags": ["tags derived from actual document content"],
-  "estimatedProcessingTime": "e.g. 2-3 business days"
+  "estimatedProcessingTime": "e.g. 2-3 business days",
+  "leaseFields": {
+    "id": "document ID or reference number, or null if not found",
+    "leaseId": "lease ID / lease number / contract number, or null",
+    "paymentType": "payment type (e.g. rent, one-time, recurring, deposit), or null",
+    "oneTimePaymentAmount": "one-time payment amount with currency, or null",
+    "oneTimePaymentDue": "one-time payment due date, or null",
+    "taxCode": "tax code or tax ID referenced, or null",
+    "effectiveFrom": "lease/contract start date or effective date, or null",
+    "endDate": "lease/contract end date or expiration date, or null",
+    "previousMeterReading": "previous meter/utility reading, or null",
+    "currentMeterReading": "current meter/utility reading, or null",
+    "paymentPeriod": "payment frequency (monthly, quarterly, annual, etc.), or null",
+    "costCenter": "cost center or department code, or null",
+    "landlord": "landlord / lessor / property owner name, or null",
+    "tenant": "tenant / lessee / renter name, or null",
+    "propertyAddress": "full property or premises address, or null",
+    "monthlyRent": "monthly rent amount with currency, or null",
+    "securityDeposit": "security deposit amount, or null",
+    "leaseTerm": "lease duration (e.g. 12 months, 3 years), or null",
+    "currency": "currency code (USD, GTQ, EUR, etc.), or null"
+  }
 }`;
 
 export async function analyzeDocument(
@@ -150,6 +172,27 @@ function validateAndNormalizeResult(result: Partial<AIAnalysisResult>): AIAnalys
     decisionSignals: result.decisionSignals || [],
     suggestedTags: result.suggestedTags || [],
     estimatedProcessingTime: result.estimatedProcessingTime,
+    leaseFields: result.leaseFields ? {
+      id: result.leaseFields.id || null,
+      leaseId: result.leaseFields.leaseId || null,
+      paymentType: result.leaseFields.paymentType || null,
+      oneTimePaymentAmount: result.leaseFields.oneTimePaymentAmount || null,
+      oneTimePaymentDue: result.leaseFields.oneTimePaymentDue || null,
+      taxCode: result.leaseFields.taxCode || null,
+      effectiveFrom: result.leaseFields.effectiveFrom || null,
+      endDate: result.leaseFields.endDate || null,
+      previousMeterReading: result.leaseFields.previousMeterReading || null,
+      currentMeterReading: result.leaseFields.currentMeterReading || null,
+      paymentPeriod: result.leaseFields.paymentPeriod || null,
+      costCenter: result.leaseFields.costCenter || null,
+      landlord: result.leaseFields.landlord || null,
+      tenant: result.leaseFields.tenant || null,
+      propertyAddress: result.leaseFields.propertyAddress || null,
+      monthlyRent: result.leaseFields.monthlyRent || null,
+      securityDeposit: result.leaseFields.securityDeposit || null,
+      leaseTerm: result.leaseFields.leaseTerm || null,
+      currency: result.leaseFields.currency || null,
+    } : undefined,
   };
 }
 

@@ -33,12 +33,15 @@ import {
   Edit2,
   Save,
   X,
+  Database,
+  FileKey,
 } from "lucide-react";
 import {
   AIAnalysisResult,
   RiskFlag,
   ChecklistItem,
   Entities,
+  LeaseFields,
   OwnerTeam,
   Priority,
 } from "@/lib/types";
@@ -74,7 +77,7 @@ export function AnalysisResults({
   onConfirmClassification,
 }: AnalysisResultsProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(["classification", "summary", "entities", "risks"])
+    new Set(["classification", "summary", "entities", "leaseFields", "risks"])
   );
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, unknown>>({});
@@ -722,6 +725,84 @@ export function AnalysisResults({
         )}
       </Card>
 
+      {/* TRIRIGA Lease Fields Card */}
+      {analysis.leaseFields && (() => {
+        const leaseFieldLabels: { key: keyof LeaseFields; label: string; icon: React.ReactNode }[] = [
+          { key: "id", label: "Document ID", icon: <Hash className="w-4 h-4" /> },
+          { key: "leaseId", label: "Lease ID", icon: <FileKey className="w-4 h-4" /> },
+          { key: "landlord", label: "Landlord / Lessor", icon: <Building2 className="w-4 h-4" /> },
+          { key: "tenant", label: "Tenant / Lessee", icon: <Users className="w-4 h-4" /> },
+          { key: "propertyAddress", label: "Property Address", icon: <MapPin className="w-4 h-4" /> },
+          { key: "effectiveFrom", label: "Effective From", icon: <Calendar className="w-4 h-4" /> },
+          { key: "endDate", label: "End Date", icon: <Calendar className="w-4 h-4" /> },
+          { key: "leaseTerm", label: "Lease Term", icon: <Calendar className="w-4 h-4" /> },
+          { key: "monthlyRent", label: "Monthly Rent", icon: <DollarSign className="w-4 h-4" /> },
+          { key: "oneTimePaymentAmount", label: "One-Time Payment", icon: <DollarSign className="w-4 h-4" /> },
+          { key: "oneTimePaymentDue", label: "One-Time Payment Due", icon: <Calendar className="w-4 h-4" /> },
+          { key: "securityDeposit", label: "Security Deposit", icon: <DollarSign className="w-4 h-4" /> },
+          { key: "paymentType", label: "Payment Type", icon: <DollarSign className="w-4 h-4" /> },
+          { key: "paymentPeriod", label: "Payment Period", icon: <Calendar className="w-4 h-4" /> },
+          { key: "currency", label: "Currency", icon: <DollarSign className="w-4 h-4" /> },
+          { key: "taxCode", label: "Tax Code", icon: <Hash className="w-4 h-4" /> },
+          { key: "costCenter", label: "Cost Center", icon: <Hash className="w-4 h-4" /> },
+          { key: "previousMeterReading", label: "Previous Meter Reading", icon: <Hash className="w-4 h-4" /> },
+          { key: "currentMeterReading", label: "Current Meter Reading", icon: <Hash className="w-4 h-4" /> },
+        ];
+        const populated = leaseFieldLabels.filter(f => analysis.leaseFields![f.key] !== null && analysis.leaseFields![f.key] !== undefined);
+        const missing = leaseFieldLabels.filter(f => analysis.leaseFields![f.key] === null || analysis.leaseFields![f.key] === undefined);
+        if (populated.length === 0) return null;
+        return (
+          <Card className="border-l-4 border-l-[#0071DC]">
+            <CardHeader className="pb-3">
+              <SectionHeader
+                title="TRIRIGA Lease Fields"
+                section="leaseFields"
+                badge={
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {populated.length} / {leaseFieldLabels.length} found
+                    </Badge>
+                    <Badge variant="outline" className="text-xs flex items-center gap-1">
+                      <Database className="w-3 h-3" />
+                      TRIRIGA
+                    </Badge>
+                  </div>
+                }
+              />
+            </CardHeader>
+            {expandedSections.has("leaseFields") && (
+              <CardContent className="pt-0 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {populated.map(({ key, label, icon }) => (
+                    <div key={key} className="rounded-lg border bg-white p-3">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                        {icon}
+                        <span>{label}</span>
+                      </div>
+                      <p className="text-sm font-medium text-gray-900 break-words">
+                        {analysis.leaseFields![key]}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                {missing.length > 0 && (
+                  <div className="rounded-lg border border-dashed border-orange-200 bg-orange-50/50 p-3">
+                    <p className="text-xs font-medium text-orange-700 mb-2">Not found in document ({missing.length})</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {missing.map(({ key, label }) => (
+                        <Badge key={key} variant="outline" className="text-xs border-orange-200 text-orange-600 bg-white">
+                          {label}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+        );
+      })()}
+
       {/* Risks & Missing Fields Card */}
       <Card>
         <CardHeader className="pb-3">
@@ -927,11 +1008,17 @@ export function AnalysisResults({
                 <span className="text-gray-500">Next action</span>
                 <span className="font-medium">{formatNextAction()}</span>
               </div>
+              <div className="flex items-center justify-between border-t border-slate-200 pt-2 mt-2">
+                <span className="text-gray-500">Destination</span>
+                <span className="font-medium flex items-center gap-1.5">
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                  TRIRIGA
+                </span>
+              </div>
             </div>
           </div>
           <p className="text-xs text-gray-500 text-center">
-            Built for Walmart-scale document intake — procurement, vendor disputes,
-            compliance reports, and more.
+            Syncs to IBM TRIRIGA for lease administration, compliance tracking, and facility management.
           </p>
         </div>
       )}

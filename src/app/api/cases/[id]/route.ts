@@ -48,6 +48,7 @@ export async function GET(
       userEdits: safeJsonParse(caseData.userEdits || "null", null),
       editedFields: safeJsonParse(caseData.editedFields || "null", null),
       tags: safeJsonParse(caseData.tags, []),
+      leaseFields: safeJsonParse((caseData as any).leaseFields || "null", null),
       docType: caseData.docType as CaseWithRelations["docType"],
       ownerTeam: caseData.ownerTeam as CaseWithRelations["ownerTeam"],
       priority: caseData.priority as CaseWithRelations["priority"],
@@ -104,7 +105,7 @@ export async function PATCH(
     const updateData: Record<string, unknown> = {};
 
     // Handle JSON fields
-    const jsonFields = ["entities", "missingFields", "riskFlags", "complianceIssues", "checklist", "draftEmail", "suggestedActions", "userEdits", "editedFields", "tags"];
+    const jsonFields = ["entities", "missingFields", "riskFlags", "complianceIssues", "checklist", "draftEmail", "suggestedActions", "userEdits", "editedFields", "tags", "leaseFields"];
 
     for (const [key, value] of Object.entries(updates)) {
       if (jsonFields.includes(key)) {

@@ -96,6 +96,28 @@ export interface SuggestedAction {
   dueDate?: string;
 }
 
+export interface LeaseFields {
+  id: string | null;
+  leaseId: string | null;
+  paymentType: string | null;
+  oneTimePaymentAmount: string | null;
+  oneTimePaymentDue: string | null;
+  taxCode: string | null;
+  effectiveFrom: string | null;
+  endDate: string | null;
+  previousMeterReading: string | null;
+  currentMeterReading: string | null;
+  paymentPeriod: string | null;
+  costCenter: string | null;
+  landlord: string | null;
+  tenant: string | null;
+  propertyAddress: string | null;
+  monthlyRent: string | null;
+  securityDeposit: string | null;
+  leaseTerm: string | null;
+  currency: string | null;
+}
+
 export interface AIAnalysisResult {
   docType: DocType;
   summary: string;
@@ -113,6 +135,7 @@ export interface AIAnalysisResult {
   decisionSignals?: string[];
   suggestedTags: string[];
   estimatedProcessingTime?: string;
+  leaseFields?: LeaseFields;
 }
 
 // Case with parsed JSON fields
@@ -137,6 +160,7 @@ export interface CaseWithRelations {
   checklist: ChecklistItem[];
   draftEmail: DraftEmail;
   suggestedActions: SuggestedAction[];
+  leaseFields: LeaseFields | null;
   userEdits: Record<string, unknown> | null;
   editedFields: Record<string, unknown> | null;
   status: CaseStatus;
