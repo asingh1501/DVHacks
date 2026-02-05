@@ -169,6 +169,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       analysis,
+      extractedText: text,
       metadata: {
         fileName,
         fileType,

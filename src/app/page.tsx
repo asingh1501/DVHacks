@@ -91,8 +91,7 @@ export default function HomePage() {
       setMetadata(data.metadata);
 
       if (file) {
-        const fileText = await file.text().catch(() => "");
-        setOriginalText(fileText || data.analysis.summary);
+        setOriginalText(data.extractedText || data.analysis.summary);
       }
 
       toast.success("Document analyzed successfully!");
