@@ -190,28 +190,100 @@ function validateAndNormalizeResult(result: Partial<AIAnalysisResult>): AIAnalys
     decisionSignals: result.decisionSignals || [],
     suggestedTags: result.suggestedTags || [],
     estimatedProcessingTime: result.estimatedProcessingTime,
-    leaseFields: result.leaseFields ? {
-      id: result.leaseFields.id || null,
-      leaseId: result.leaseFields.leaseId || null,
-      paymentType: result.leaseFields.paymentType || null,
-      oneTimePaymentAmount: result.leaseFields.oneTimePaymentAmount || null,
-      oneTimePaymentDue: result.leaseFields.oneTimePaymentDue || null,
-      taxCode: result.leaseFields.taxCode || null,
-      effectiveFrom: result.leaseFields.effectiveFrom || null,
-      endDate: result.leaseFields.endDate || null,
-      previousMeterReading: result.leaseFields.previousMeterReading || null,
-      currentMeterReading: result.leaseFields.currentMeterReading || null,
-      paymentPeriod: result.leaseFields.paymentPeriod || null,
-      costCenter: result.leaseFields.costCenter || null,
-      landlord: result.leaseFields.landlord || null,
-      tenant: result.leaseFields.tenant || null,
-      propertyAddress: result.leaseFields.propertyAddress || null,
-      monthlyRent: result.leaseFields.monthlyRent || null,
-      securityDeposit: result.leaseFields.securityDeposit || null,
-      leaseTerm: result.leaseFields.leaseTerm || null,
-      currency: result.leaseFields.currency || null,
-    } : undefined,
+    leaseFields: result.leaseFields ? inferLeaseFields(result.leaseFields) : undefined,
   };
+}
+
+function inferLeaseFields(raw: Partial<AIAnalysisResult["leaseFields"] & object>): NonNullable<AIAnalysisResult["leaseFields"]> {
+  const fields = {
+    id: raw.id || null,
+    leaseId: raw.leaseId || null,
+    paymentType: raw.paymentType || null,
+    oneTimePaymentAmount: raw.oneTimePaymentAmount || null,
+    oneTimePaymentDue: raw.oneTimePaymentDue || null,
+    taxCode: raw.taxCode || null,
+    effectiveFrom: raw.effectiveFrom || null,
+    endDate: raw.endDate || null,
+    previousMeterReading: raw.previousMeterReading || null,
+    currentMeterReading: raw.currentMeterReading || null,
+    paymentPeriod: raw.paymentPeriod || null,
+    costCenter: raw.costCenter || null,
+    landlord: raw.landlord || null,
+    tenant: raw.tenant || null,
+    propertyAddress: raw.propertyAddress || null,
+    monthlyRent: raw.monthlyRent || null,
+    securityDeposit: raw.securityDeposit || null,
+    leaseTerm: raw.leaseTerm || null,
+    currency: raw.currency || null,
+  };
+
+  // Infer oneTimePaymentDue from effectiveFrom if missing
+  if (!fields.oneTimePaymentDue && fields.effectiveFrom) {
+    fields.oneTimePaymentDue = fields.effectiveFrom;
+  }
+
+  // Infer endDate from effectiveFrom + paymentPeriod if missing
+  if (!fields.endDate && fields.effectiveFrom && fields.paymentPeriod) {
+    const end = inferEndDate(fields.effectiveFrom, fields.paymentPeriod);
+    if (end) fields.endDate = end;
+  }
+
+  // Infer leaseTerm from paymentPeriod if missing
+  if (!fields.leaseTerm && fields.paymentPeriod) {
+    const termMap: Record<string, string> = {
+      "monthly": "1 month",
+      "quarterly": "3 months",
+      "semi-annual": "6 months",
+      "annual": "12 months",
+    };
+    fields.leaseTerm = termMap[fields.paymentPeriod.toLowerCase()] || null;
+  }
+
+  return fields;
+}
+
+function inferEndDate(effectiveFrom: string, paymentPeriod: string): string | null {
+  try {
+    // Parse common date formats: "06-may-2025", "01-Feb-2025", "2025-05-06", etc.
+    const dateStr = effectiveFrom.replace(/\s+\d{2}:\d{2}:\d{2}$/, "").trim(); // strip time
+    const parsed = new Date(dateStr);
+
+    // If Date constructor can't parse, try manual parsing for "DD-Mon-YYYY"
+    let date: Date;
+    if (isNaN(parsed.getTime())) {
+      const months: Record<string, number> = {
+        jan: 0, ene: 0, feb: 1, mar: 2, apr: 3, abr: 3, may: 4,
+        jun: 5, jul: 6, aug: 7, ago: 7, sep: 8, oct: 9, nov: 10, dec: 11, dic: 11,
+      };
+      const match = dateStr.match(/(\d{1,2})[/-](\w{3,})[/-](\d{4})/i);
+      if (!match) return null;
+      const day = parseInt(match[1]);
+      const mon = months[match[2].toLowerCase().slice(0, 3)];
+      const year = parseInt(match[3]);
+      if (mon === undefined) return null;
+      date = new Date(year, mon, day);
+    } else {
+      date = parsed;
+    }
+
+    if (isNaN(date.getTime())) return null;
+
+    // Add months based on payment period
+    const periodMonths: Record<string, number> = {
+      "monthly": 1, "quarterly": 3, "semi-annual": 6, "annual": 12, "one-time": 1,
+    };
+    const monthsToAdd = periodMonths[paymentPeriod.toLowerCase()] || 1;
+    date.setMonth(date.getMonth() + monthsToAdd);
+
+    // Format back as DD-Mon-YYYY
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mon = monthNames[date.getMonth()];
+    const yyyy = date.getFullYear();
+    return `${dd}-${mon}-${yyyy}`;
+  } catch {
+    return null;
+  }
 }
 
 // Document type detection helpers
