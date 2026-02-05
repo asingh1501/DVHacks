@@ -7,54 +7,55 @@ const groq = process.env.GROQ_API_KEY
   : null;
 
 const AI_SYSTEM_PROMPT = `You are an expert document analyst for SLATE, Walmart's AI-powered document intelligence platform.
-Your task is to analyze documents and extract structured information.
+Your job is to deeply read documents and extract EVERY piece of concrete information from them.
 
-Analyze the document and provide:
-1. Document type classification
-2. Executive summary (2-3 sentences)
-3. All extracted entities (people, organizations, dates, amounts, IDs, locations, emails, phones)
-4. Recommended owner team for handling this document
-5. Priority level based on urgency indicators
-6. List of required fields that are missing
-7. Risk flags with severity levels
-8. Compliance issues if applicable
-9. Recommended actions and checklist items
-10. Draft email for follow-up if applicable
+CRITICAL RULES:
+- Extract ALL names, companies, dates, dollar amounts, IDs, addresses, emails, and phone numbers that appear ANYWHERE in the document. Do not skip any. If a name or number appears in the text, it MUST appear in your entities output.
+- Your summary must reference specific facts from the document (names, amounts, dates) — never write a generic summary.
+- Risk flags must cite specific issues found IN the document (e.g. "Invoice is past due by 15 days" not "May have timing issues").
+- The checklist must contain actionable steps specific to THIS document's content.
+- The draft email must reference the actual parties, amounts, and dates from the document.
+- If information for a field genuinely does not exist in the document, return an empty array — do NOT fabricate data.
+- For requiredFieldsMissing, think about what fields you would EXPECT for this document type that are absent (e.g. an invoice missing a PO number, a contract missing an effective date).`;
 
-Be thorough but concise. Focus on actionable insights.`;
+const AI_USER_PROMPT = (text: string) => `Read this document carefully and extract every piece of information from it.
 
-const AI_USER_PROMPT = (text: string) => `Analyze the following document and provide a structured analysis:
-
----
+DOCUMENT START
 ${text}
----
+DOCUMENT END
 
-Respond with a JSON object matching this exact schema:
+Step 1: Read the entire document above word by word.
+Step 2: List every person name, company name, date, dollar amount, ID/reference number, address, email, and phone number you find.
+Step 3: Determine what type of document this is based on its structure and content.
+Step 4: Write a summary that mentions the specific key facts (who, what, when, how much).
+Step 5: Identify what's missing, what's risky, and what needs to happen next — all based on what you actually read.
+
+Respond with a JSON object matching this EXACT schema. Every field must reflect the ACTUAL document content, not generic placeholders:
 {
   "docType": "invoice|contract|resume|incident_report|meeting_notes|policy|email|purchase_order|proposal|other",
-  "summary": "2-3 sentence executive summary",
+  "summary": "2-3 sentences with specific names, dates, and amounts from the document",
   "entities": {
-    "people": ["names"],
-    "organizations": ["company names"],
-    "dates": ["ISO dates or date strings found"],
-    "amounts": ["money amounts with currency"],
-    "ids": ["invoice numbers, PO numbers, IDs"],
-    "locations": ["addresses, cities"],
-    "emails": ["email addresses"],
-    "phones": ["phone numbers"]
+    "people": ["every person name found in the document"],
+    "organizations": ["every company, department, or org name found"],
+    "dates": ["every date or time reference found, in original format"],
+    "amounts": ["every dollar amount, fee, total, or price found with currency symbol"],
+    "ids": ["every invoice number, PO number, case number, reference ID, account number found"],
+    "locations": ["every address, city, state, country found"],
+    "emails": ["every email address found"],
+    "phones": ["every phone or fax number found"]
   },
   "ownerTeam": "AP|Legal|HR|Ops|Support|Sales|IT|Finance|Procurement|Unknown",
   "priority": "low|medium|high|urgent",
-  "requiredFieldsMissing": ["list of required fields not found"],
-  "riskFlags": [{"flag": "short_id", "severity": "info|warning|critical", "description": "why flagged"}],
-  "complianceIssues": [{"issue": "issue", "regulation": "e.g. GDPR", "recommendation": "action"}],
-  "recommendedActions": [{"type": "checklist|draft_email|approval_request|escalation|reminder", "title": "action title", "priority": "low|medium|high", "stepsOrBody": ["steps or paragraphs"], "dueDate": "ISO date if time-sensitive"}],
-  "checklist": [{"id": "unique_id", "task": "task description", "description": "optional details", "completed": false, "assignee": "optional", "dueDate": "optional ISO date"}],
-  "draftEmail": {"to": ["recipients"], "cc": [], "subject": "subject line", "body": "email body in markdown", "tone": "formal|professional|friendly|urgent"},
+  "requiredFieldsMissing": ["fields expected for this document type that are NOT present in the text"],
+  "riskFlags": [{"flag": "short_id", "severity": "info|warning|critical", "description": "specific issue found in THIS document"}],
+  "complianceIssues": [{"issue": "specific issue", "regulation": "applicable regulation", "recommendation": "specific action to take"}],
+  "recommendedActions": [{"type": "checklist|draft_email|approval_request|escalation|reminder", "title": "specific action title", "priority": "low|medium|high", "stepsOrBody": ["concrete steps referencing document details"], "dueDate": "ISO date if a deadline exists in the document"}],
+  "checklist": [{"id": "chk_1", "task": "specific task for this document", "description": "details from the document", "completed": false, "assignee": "team or role if obvious", "dueDate": "date if referenced in document"}],
+  "draftEmail": {"to": ["actual recipients from document if identifiable"], "cc": [], "subject": "subject referencing document specifics", "body": "email body referencing actual names, amounts, dates from the document", "tone": "formal|professional|friendly|urgent"},
   "confidence": 0.0-1.0,
-  "rationale": "2-3 sentences explaining classification decisions",
-  "decisionSignals": ["3-5 short bullet statements justifying docType, ownerTeam, and priority"],
-  "suggestedTags": ["relevant tags"],
+  "rationale": "2-3 sentences explaining WHY you classified it this way, citing specific evidence from the text",
+  "decisionSignals": ["3-5 bullet statements citing specific phrases or data points from the document that drove your classification"],
+  "suggestedTags": ["tags derived from actual document content"],
   "estimatedProcessingTime": "e.g. 2-3 business days"
 }`;
 
@@ -82,8 +83,8 @@ export async function analyzeDocument(
         { role: "user", content: AI_USER_PROMPT(text) },
       ],
       response_format: { type: "json_object" },
-      temperature: 0.3,
-      max_tokens: 4000,
+      temperature: 0.2,
+      max_tokens: 8000,
     });
 
     const content = response.choices[0]?.message?.content;
@@ -94,7 +95,16 @@ export async function analyzeDocument(
 
     console.log("Groq API response received successfully");
     const parsed = JSON.parse(content) as AIAnalysisResult;
-    return validateAndNormalizeResult(parsed);
+    const result = validateAndNormalizeResult(parsed);
+
+    // Log extraction quality so we can verify real data came back
+    const entityCount = Object.values(result.entities).flat().length;
+    console.log(`[SLATE] Extraction complete — docType: ${result.docType}, entities: ${entityCount}, risks: ${result.riskFlags.length}, confidence: ${result.confidence}`);
+    if (entityCount === 0) {
+      console.warn("[SLATE] WARNING: Zero entities extracted. The document may have had no extractable data, or the model returned generic output.");
+    }
+
+    return result;
   } catch (error) {
     console.error("DEBUG: Groq API error occurred:", error);
     console.error("DEBUG: Error details:", {
