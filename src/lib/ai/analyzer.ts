@@ -17,7 +17,18 @@ CRITICAL RULES:
 - The draft email must reference the actual parties, amounts, and dates from the document.
 - If information for a field genuinely does not exist in the document, return an empty array — do NOT fabricate data.
 - For requiredFieldsMissing, think about what fields you would EXPECT for this document type that are absent (e.g. an invoice missing a PO number, a contract missing an effective date).
-- ALWAYS populate the "leaseFields" object. For EVERY lease field, look hard in the document for it. If a lease field is not present, set it to null. These are the fields TRIRIGA needs for lease administration, so extract them precisely.`;
+- ALWAYS populate the "leaseFields" object. For EVERY lease field, look hard in the document for it. If a lease field is not present, set it to null. These are the fields TRIRIGA needs for lease administration, so extract them precisely.
+- Map document data to lease fields AGGRESSIVELY. Documents may be in any language. Examples of mappings:
+  - Tax IDs, NIT, VAT numbers, "Nit Emisor" -> taxCode
+  - "arrendamiento", rental, lease payment -> paymentType is "rent"
+  - The entity/company issuing the document -> landlord
+  - The receiving entity, "Receptor", buyer -> tenant
+  - Payment amounts, totals -> monthlyRent or oneTimePaymentAmount depending on context
+  - "Moneda", currency symbols (Q, $, €) -> currency
+  - Creation dates, validation dates, effective dates -> effectiveFrom
+  - Reference numbers, Serie, DTE numbers, approval numbers -> id or leaseId
+  - Monthly, quarterly, annual, "del mes de" -> paymentPeriod
+  - Addresses, locations, property descriptions -> propertyAddress`;
 
 const AI_USER_PROMPT = (text: string) => `Read this document carefully and extract every piece of information from it.
 
@@ -69,12 +80,12 @@ Respond with a JSON object matching this EXACT schema. Every field must reflect 
     "endDate": "lease/contract end date or expiration date, or null",
     "previousMeterReading": "previous meter/utility reading, or null",
     "currentMeterReading": "current meter/utility reading, or null",
-    "paymentPeriod": "payment frequency (monthly, quarterly, annual, etc.), or null",
+    "paymentPeriod": "payment frequency as a standard term: monthly, quarterly, semi-annual, annual, or one-time. Infer from context (e.g. 'del mes de' = monthly). null if unknown",
     "costCenter": "cost center or department code, or null",
     "landlord": "landlord / lessor / property owner name, or null",
     "tenant": "tenant / lessee / renter name, or null",
     "propertyAddress": "full property or premises address, or null",
-    "monthlyRent": "monthly rent amount with currency, or null",
+    "monthlyRent": "recurring rent/lease payment amount with currency symbol (e.g. Q26,389.12 or $5,000.00), or null",
     "securityDeposit": "security deposit amount, or null",
     "leaseTerm": "lease duration (e.g. 12 months, 3 years), or null",
     "currency": "currency code (USD, GTQ, EUR, etc.), or null"
