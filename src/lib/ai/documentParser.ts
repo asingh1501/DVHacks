@@ -52,16 +52,24 @@ export async function parseDocument(
 async function parsePdf(file: File | Buffer): Promise<ParsedDocument> {
   try {
     const buffer = file instanceof File ? Buffer.from(await file.arrayBuffer()) : file;
-    
+    console.log(`[SLATE PDF] Buffer size: ${buffer.length} bytes`);
+
     // Try standard PDF parsing
     try {
       const pdf = await getPdfParser();
+      console.log("[SLATE PDF] pdf-parse loaded, extracting text...");
       const data = await pdf(buffer);
-      
+
       const extractedText = data.text ? data.text.trim() : "";
-      
+      console.log(`[SLATE PDF] Extracted ${extractedText.length} chars from ${data.numpages || 0} pages`);
+      if (extractedText.length > 0) {
+        console.log(`[SLATE PDF] Text preview: "${extractedText.slice(0, 200)}..."`);
+      } else {
+        console.warn("[SLATE PDF] No text extracted — PDF may be image-based/scanned");
+      }
+
       return {
-        text: extractedText || "PDF uploaded but no text extracted. May require OCR.",
+        text: extractedText,
         fileType: "pdf",
         metadata: {
           pageCount: data.numpages || 0,
@@ -70,10 +78,9 @@ async function parsePdf(file: File | Buffer): Promise<ParsedDocument> {
         },
       };
     } catch (pdfError) {
-      console.error("PDF parsing error:", pdfError);
-      // Return minimal response instead of failing
+      console.error("[SLATE PDF] pdf-parse failed:", pdfError);
       return {
-        text: "PDF uploaded but could not be parsed. May be corrupted or require OCR.",
+        text: "",
         fileType: "pdf",
         metadata: {
           pageCount: 0,
@@ -81,7 +88,7 @@ async function parsePdf(file: File | Buffer): Promise<ParsedDocument> {
       };
     }
   } catch (error) {
-    console.error("PDF parsing error:", error);
+    console.error("[SLATE PDF] Fatal error:", error);
     throw new Error("Failed to process PDF file");
   }
 }

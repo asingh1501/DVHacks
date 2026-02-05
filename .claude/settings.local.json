@@ -4,7 +4,10 @@
       "Bash(npx next build:*)",
       "Bash(git push:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(node -e:*)",
+      "Bash(python3:*)",
+      "Bash(node --version)"
     ]
   }
 }

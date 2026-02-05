@@ -111,22 +111,34 @@ export async function POST(request: NextRequest) {
         // Parse document
         const parsed = await parseDocument(file, fileType);
         text = parsed.text;
-        
-        // If PDF has minimal text, try OCR
-        if (fileType === "pdf" && text.length < 100) {
-          console.log("PDF has minimal text, attempting OCR extraction...");
+
+        console.log(`[SLATE] Initial extraction: ${text.length} chars, fileType: ${fileType}`);
+
+        // For PDFs, try OCR if text extraction yielded little/no content
+        if (fileType === "pdf" && text.length < 500) {
+          console.log(`[SLATE] PDF text is short (${text.length} chars), attempting OCR...`);
           try {
             const buffer = Buffer.from(await file.arrayBuffer());
             const ocrText = await extractPdfWithOCR(buffer);
             if (ocrText && ocrText.length > text.length) {
-              console.log("OCR extraction successful, using OCR text");
+              console.log(`[SLATE] OCR extracted ${ocrText.length} chars (vs ${text.length} from pdf-parse), using OCR text`);
               text = ocrText;
             }
           } catch (ocrError) {
-            console.error("OCR extraction failed:", ocrError);
-            // Continue with whatever text we have
+            console.warn("[SLATE] OCR not available:", ocrError instanceof Error ? ocrError.message : ocrError);
           }
         }
+
+        // If we still have no real text, return a clear error
+        if (!text || text.length < 10) {
+          console.error(`[SLATE] Failed to extract text from PDF. Final text length: ${text?.length || 0}`);
+          return NextResponse.json(
+            { error: "Could not extract text from this PDF. It may be image-based. Try copy-pasting the text manually using the Paste Text tab." },
+            { status: 422 }
+          );
+        }
+
+        console.log(`[SLATE] Final text for analysis: ${text.length} chars. Preview: "${text.slice(0, 150)}..."`);
       } else if (pastedText) {
         text = pastedText.trim();
         fileType = "paste";
