@@ -7,7 +7,17 @@
       "Bash(git commit:*)",
       "Bash(node -e:*)",
       "Bash(python3:*)",
-      "Bash(node --version)"
+      "Bash(node --version)",
+      "Bash(gh repo view:*)",
+      "Bash(git remote:*)",
+      "Bash(npm install:*)",
+      "Bash(vercel whoami:*)",
+      "Bash(vercel login:*)",
+      "Bash(vercel link:*)",
+      "Bash(vercel env add:*)",
+      "Bash(vercel env:*)",
+      "Bash(vercel:*)",
+      "Bash(npx prisma db push:*)"
     ]
   }
 }
