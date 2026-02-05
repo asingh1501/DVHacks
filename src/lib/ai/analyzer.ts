@@ -18,19 +18,24 @@ CRITICAL RULES:
 - If information for a field genuinely does not exist in the document, return an empty array — do NOT fabricate data.
 - For requiredFieldsMissing, think about what fields you would EXPECT for this document type that are absent (e.g. an invoice missing a PO number, a contract missing an effective date).
 - ALWAYS populate the "leaseFields" object. For EVERY lease field, look hard in the document for it. If a lease field is not present, set it to null. These are the fields TRIRIGA needs for lease administration, so extract them precisely.
-- Map document data to lease fields AGGRESSIVELY. Documents may be in any language. Fill as MANY fields as possible — do NOT leave a field null if there is ANY reasonable data to fill it with. Examples:
-  - Tax IDs, NIT, VAT numbers, "Nit Emisor", tax references -> taxCode
-  - "arrendamiento", rental, lease payment, "alquiler" -> paymentType is "rent"
+- Map document data to lease fields AGGRESSIVELY. Documents may be in any language. Fill as MANY fields as possible — do NOT leave a field null if there is ANY reasonable data to fill it with.
+- You MUST also INFER fields when possible. Do NOT only extract literal text — use reasoning:
+  - If paymentPeriod is "monthly" and effectiveFrom is known, then endDate = effectiveFrom + 1 month
+  - If paymentPeriod is "quarterly" and effectiveFrom is known, then endDate = effectiveFrom + 3 months
+  - If effectiveFrom is known and no separate due date exists, oneTimePaymentDue = effectiveFrom (the payment is due on the effective date)
+  - If "IVA", "VAT", "GST", "Sales Tax" appear in the Impuestos/Tax column, taxCode = that tax type (e.g. "IVA"), NOT the NIT/tax ID number
+  - If a payment is for a single period (one invoice), set paymentType = "one-time"
+- Specific mapping rules:
+  - "arrendamiento", rental, lease payment, "alquiler" -> paymentType is "rent" (BUT if the invoice covers a single period, ALSO set paymentType to "one-time")
   - The entity/company issuing the document, the lessor, vendor -> landlord
   - The receiving entity, "Receptor", buyer, lessee -> tenant
-  - Invoice totals, payment amounts -> BOTH monthlyRent AND oneTimePaymentAmount if it's a single payment for a period
+  - Invoice totals, payment amounts -> BOTH monthlyRent AND oneTimePaymentAmount
   - "Moneda", currency symbols (Q, $, €), GTQ/USD/EUR -> currency
   - Creation dates, "Momento de creación", validation dates, invoice dates -> effectiveFrom
   - Reference numbers, Serie, DTE numbers, approval numbers, "Número de aprobación" -> id or leaseId (use the most unique one for id, use the shorter reference for leaseId)
   - Monthly, quarterly, annual, "del mes de", per-month payments -> paymentPeriod (always use standard English: "monthly", "quarterly", "annual", "one-time")
   - Addresses, locations, property descriptions, "Bulevar", street addresses -> propertyAddress
-  - Store names, branch names, department names, "Tienda", location codes -> costCenter
-  - If the document is an invoice for a single period, the total IS the oneTimePaymentAmount`;
+  - Store names, branch names, department names, "Tienda", location codes -> costCenter`;
 
 const AI_USER_PROMPT = (text: string) => `Read this document carefully and extract every piece of information from it.
 
@@ -76,10 +81,10 @@ Respond with a JSON object matching this EXACT schema. Every field must reflect 
     "leaseId": "lease ID / lease number / contract number, or null",
     "paymentType": "payment type (e.g. rent, one-time, recurring, deposit), or null",
     "oneTimePaymentAmount": "one-time payment amount with currency, or null",
-    "oneTimePaymentDue": "one-time payment due date, or null",
-    "taxCode": "tax code or tax ID referenced, or null",
-    "effectiveFrom": "lease/contract start date or effective date, or null",
-    "endDate": "lease/contract end date or expiration date, or null",
+    "oneTimePaymentDue": "payment due date — if no explicit due date, use the effective/creation date. or null only if no dates exist at all",
+    "taxCode": "the TAX TYPE applied (e.g. IVA, VAT, GST, Sales Tax) from the Impuestos/Tax column — NOT the NIT or tax ID number. or null",
+    "effectiveFrom": "lease/contract start date, creation date, or invoice date, or null",
+    "endDate": "lease end date. If not explicit, INFER from effectiveFrom + paymentPeriod (e.g. monthly = +1 month, quarterly = +3 months). or null only if effectiveFrom is also null",
     "previousMeterReading": "previous meter/utility reading, or null",
     "currentMeterReading": "current meter/utility reading, or null",
     "paymentPeriod": "payment frequency as a standard term: monthly, quarterly, semi-annual, annual, or one-time. Infer from context (e.g. 'del mes de' = monthly). null if unknown",
